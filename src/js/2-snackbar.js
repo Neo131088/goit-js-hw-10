@@ -1,42 +1,36 @@
+
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
 const form = document.querySelector('.form');
-const toastOptions = {
-  icon: 'icon-placeholder',
-  position: 'topRight',
-  timeout: 3000,
-};
+form.addEventListener('submit', event => {
+  event.preventDefault();
+  const radioState = event.target.elements.state.value;
+  const delay = event.target.elements.delay.value;
 
-form.addEventListener('submit', createPromise);
-
-function createPromise(e) {
-  e.preventDefault();
-  const delay = +e.target.elements.delay.value.trim();
-  const state = e.target.elements.state.value.trim();
-
-  return new Promise((resolve, reject) => {
+  const promise = new Promise((resolve, reject) => {
     setTimeout(() => {
-      state === 'fulfilled' ? resolve('Fulfilled') : reject('Rejected');
-    }, delay);
-  })
-    .then(() => {
+      if (radioState === 'fulfilled') {
+        resolve(delay);
+      } else {
+        reject(delay);
+      }
+    }, Number(delay));
+  });
+
+  promise
+    .then(delay => {
       iziToast.success({
-        ...toastOptions,
-        iconText: '✅',
-        title: 'Fulfilled',
-        message: `promise in ${delay}ms`
+        title: 'Success',
+        message: `✅ Fulfilled promise in ${delay}ms`,
+        position: 'topRight',
       });
     })
-    .catch(() => {
+    .catch(delay => {
       iziToast.error({
-        ...toastOptions,
-        iconText: '❌',
-        title: 'Rejected',
-        message: `promise in ${delay}ms`
+        title: 'Error',
+        message: `❌ Rejected promise in ${delay}ms`,
+        position: 'topRight',
       });
-    })
-    .finally(() => {
-      form.reset();
     });
-}
+});

@@ -3,14 +3,17 @@ import 'flatpickr/dist/flatpickr.min.css';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
-let userSelectedDate = null;
-let timerInterval = null;
-const button = document.querySelector('button[data-start]');
-const selectedInput = document.querySelector('#datetime-picker');
-const timerResult = document.querySelector('.timer');
+const startBtn = document.querySelector('[data-start]');
+const timePicker = document.querySelector('#datetime-picker');
+const daysEl = document.querySelector('[data-days]');
+const hoursEl = document.querySelector('[data-hours]');
+const minutesEl = document.querySelector('[data-minutes]');
+const secondsEl = document.querySelector('[data-seconds]');
 
-button.disabled = true;
-button.addEventListener('click', timerStart);
+let userSelectedDate = null;
+let timerId = null;
+
+startBtn.disabled = true;
 
 const options = {
   enableTime: true,
@@ -18,34 +21,54 @@ const options = {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    if (Date.now() < Date.parse(selectedDates[0])) {
-      userSelectedDate = selectedDates[0];
-      button.disabled = false;
-    } else {
-      button.disabled = true;
+    const selectedDate = selectedDates[0];
+    console.log(selectedDate);
+    if (selectedDate <= new Date()) {
       iziToast.error({
-        message: 'Please choose a date in the future.',
+        title: 'Error',
+        message: 'Please choose a date in the future',
         position: 'topRight',
       });
+      startBtn.disabled = true;
+    } else {
+      userSelectedDate = selectedDate;
+      startBtn.disabled = false;
     }
   },
 };
 
-flatpickr(selectedInput, options);
+flatpickr(timePicker, options);
 
-function timerStart() {
-  if (timerInterval !== null) return;
-  triggersDisable();
-  timerInterval = setInterval(() => {
-    const resultTime = userSelectedDate - Date.now();
+startBtn.addEventListener('click', () => {
+  startBtn.disabled = true;
+  timePicker.disabled = true;
 
-    if (resultTime < 0) {
-      stopTimer();
+  timerId = setInterval(() => {
+    const countDown = userSelectedDate - new Date();
+    console.log(countDown);
+
+    if (countDown <= 0) {
+      clearInterval(timerId);
+      updateTimer(0);
+      timePicker.disabled = false;
       return;
     }
 
-    updateTimer(convertMs(resultTime));
+    updateTimer(countDown);
   }, 1000);
+});
+
+function updateTimer(ms) {
+  const { days, hours, minutes, seconds } = convertMs(ms);
+  console.log({ days, hours, minutes, seconds });
+  daysEl.textContent = addLeadingZero(days);
+  hoursEl.textContent = addLeadingZero(hours);
+  minutesEl.textContent = addLeadingZero(minutes);
+  secondsEl.textContent = addLeadingZero(seconds);
+}
+
+function addLeadingZero(value) {
+  return String(value).padStart(2, '0');
 }
 
 function convertMs(ms) {
@@ -65,31 +88,4 @@ function convertMs(ms) {
   const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
-}
-
-function updateTimer({ days, hours, minutes, seconds }) {
-  timerResult.querySelector('[data-days]').textContent = addLeadingZero(days);
-  timerResult.querySelector('[data-hours]').textContent = addLeadingZero(hours);
-  timerResult.querySelector('[data-minutes]').textContent = addLeadingZero(minutes);
-  timerResult.querySelector('[data-seconds]').textContent = addLeadingZero(seconds);
-}
-
-function stopTimer() {
-  clearInterval(timerInterval);
-  timerInterval = null;
-  triggersEnable();
-  updateTimer({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-}
-
-function triggersDisable() {
-  button.disabled = true;
-  selectedInput.disabled = true;
-}
-
-function triggersEnable() {
-  selectedInput.disabled = false;
-}
-
-function addLeadingZero(value) {
-  return String(value).padStart(2, '0');
 }
