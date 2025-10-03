@@ -1,47 +1,42 @@
 import iziToast from 'izitoast';
-
 import 'izitoast/dist/css/iziToast.min.css';
 
-const refs = {
-  form: document.querySelector('.form'),
+const form = document.querySelector('.form');
+const toastOptions = {
+  icon: 'icon-placeholder',
+  position: 'topRight',
+  timeout: 3000,
 };
 
-refs.form.addEventListener('submit', e => {
+form.addEventListener('submit', createPromise);
+
+function createPromise(e) {
   e.preventDefault();
-  const delay = e.target.elements.delay.value;
-  const state = e.target.elements.state.value;
+  const delay = +e.target.elements.delay.value.trim();
+  const state = e.target.elements.state.value.trim();
 
-  createPromise(delay, state)
-    .then(delay =>
-      iziToast.show({
-        iconUrl: '../img/Group.svg',
-
-        message: `Fulfilled promise in ${delay}ms`,
-        messageColor: 'rgba(255, 255, 255, 1)',
-        position: 'topRight',
-        color: 'rgba(89, 161, 13, 1)',
-      })
-    )
-    .catch(delay =>
-      iziToast.show({
-        iconUrl: '../img/Group (1).svg',
-        message: `Rejected promise in ${delay}ms`,
-        messageColor: 'rgba(255, 255, 255, 1)',
-        position: 'topRight',
-        color: 'rgba(239, 64, 64, 1)',
-      })
-    )
-    .finally(() => refs.form.reset());
-});
-
-const createPromise = (delay, state) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      if (state === 'fulfilled') {
-        resolve(delay);
-      } else {
-        reject(delay);
-      }
-    }, `${delay}`);
-  });
-};
+      state === 'fulfilled' ? resolve('Fulfilled') : reject('Rejected');
+    }, delay);
+  })
+    .then(() => {
+      iziToast.success({
+        ...toastOptions,
+        iconText: '✅',
+        title: 'Fulfilled',
+        message: `promise in ${delay}ms`
+      });
+    })
+    .catch(() => {
+      iziToast.error({
+        ...toastOptions,
+        iconText: '❌',
+        title: 'Rejected',
+        message: `promise in ${delay}ms`
+      });
+    })
+    .finally(() => {
+      form.reset();
+    });
+}
